@@ -1,6 +1,8 @@
 package com.gokul.ambrosiabackend.controller;
 
 
+import com.gokul.ambrosiabackend.dto.AuthResponse;
+import com.gokul.ambrosiabackend.dto.LoginRequest;
 import com.gokul.ambrosiabackend.dto.RegisterRequest;
 import com.gokul.ambrosiabackend.service.AuthService;
 import lombok.AllArgsConstructor;
@@ -27,5 +29,10 @@ public class AuthController {
     public ResponseEntity verify(@PathVariable String token){
         authService.verifyToken(token);
         return new ResponseEntity<>("Account Activated ",HttpStatus.OK);
+    }
+
+    @PostMapping("/login")
+    public AuthResponse login(@RequestBody LoginRequest loginRequest){
+        return authService.login(loginRequest);
     }
 }

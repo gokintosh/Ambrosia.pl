@@ -1,6 +1,8 @@
 package com.gokul.ambrosiabackend.service;
 
 
+import com.gokul.ambrosiabackend.dto.AuthResponse;
+import com.gokul.ambrosiabackend.dto.LoginRequest;
 import com.gokul.ambrosiabackend.dto.RegisterRequest;
 import com.gokul.ambrosiabackend.exception.ActivationException;
 import com.gokul.ambrosiabackend.model.AccountVerificationToken;
@@ -8,7 +10,12 @@ import com.gokul.ambrosiabackend.model.NotificationEmail;
 import com.gokul.ambrosiabackend.model.User;
 import com.gokul.ambrosiabackend.repository.TokenRepository;
 import com.gokul.ambrosiabackend.repository.UserRepository;
+import com.gokul.ambrosiabackend.security.JWTProvider;
 import lombok.AllArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +35,8 @@ public class AuthService {
     TokenRepository tokenRepository;
     MailBuilder mailBuilder;
     MailService mailService;
+    AuthenticationManager authenticationManager;
+    JWTProvider jwtProvider;
 
     @Transactional
     public void register(RegisterRequest registerRequest){
@@ -43,6 +52,14 @@ public class AuthService {
         String token=generateToken(user);
         String message=mailBuilder.build("Welcome to Ambrosia.pl. "+"Please visit the link below to activate your account :"+EMAIL_ACTIVATION+"/"+token);
         mailService.sendMail(new NotificationEmail("Please Activate your account", user.getEmail(),message));
+    }
+
+    public AuthResponse login(LoginRequest loginRequest){
+        Authentication authenticate=authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(),loginRequest.getPassword()));
+        SecurityContextHolder.getContext().setAuthentication(authenticate);
+        String authToken=jwtProvider.generateToken(authenticate);
+        return new AuthResponse(authToken,loginRequest.getUsername());
     }
 
     private String encodePassword(String password){
